@@ -1,0 +1,76 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Log Aktivitas & Audit Keamanan</h1>
+    <p class="page-subtitle">Rekaman forensik aktivitas autentikasi, akses data, dan deteksi eksploitasi di laboratorium.</p>
+  </div>
+  <div>
+    <a href="/admin/dashboard" class="btn btn-secondary">⬅️ Kembali ke Dashboard</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    <span>🛡️ Catatan Forensik Audit (Audit Logs)</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Waktu</th>
+          <th>Pengguna</th>
+          <th>Role</th>
+          <th>Tindakan (Action)</th>
+          <th>IP Address</th>
+          <th>Status</th>
+          <th>Mode Lab</th>
+          <th>Detail Aktivitas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (logs.length === 0) { %>
+          <tr>
+            <td colspan="9" style="text-align: center; color: var(--text-muted);">Belum ada log aktivitas tercatat.</td>
+          </tr>
+        <% } else { %>
+          <% logs.forEach(l => { %>
+            <tr>
+              <td><code>#<%= l.id %></code></td>
+              <td style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;"><%= new Date(l.created_at).toLocaleString('id-ID') %></td>
+              <td>
+                <% if (l.username) { %>
+                  <strong><%= l.username %></strong>
+                <% } else { %>
+                  <span style="color: var(--text-muted);">Guest / Unknown</span>
+                <% } %>
+              </td>
+              <td><span class="badge-tag" style="background-color: var(--bg-surface);"><%= l.role || '-' %></span></td>
+              <td><code><%= l.action %></code></td>
+              <td style="font-size: 0.8rem;"><code><%= l.ip_address || '127.0.0.1' %></code></td>
+              <td>
+                <% if (l.status === 'blocked') { %>
+                  <span class="badge-tag" style="background-color: var(--vuln-red-bg); color: #fca5a5; border: 1px solid var(--vuln-red-border);">BLOCKED</span>
+                <% } else if (l.status === 'success') { %>
+                  <span class="badge-tag" style="background-color: var(--secure-green-bg); color: #6ee7b7;">SUCCESS</span>
+                <% } else { %>
+                  <span class="badge-tag" style="background-color: var(--warning-amber-bg); color: #fde047;">FAILED</span>
+                <% } %>
+              </td>
+              <td>
+                <span class="badge-tag <%= l.mode === 'vulnerable' ? 'vulnerable' : 'secure' %>" style="font-size: 0.7rem;">
+                  <%= l.mode.toUpperCase() %>
+                </span>
+              </td>
+              <td style="font-size: 0.85rem; color: var(--text-secondary);"><%= l.details %></td>
+            </tr>
+          <% }); %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

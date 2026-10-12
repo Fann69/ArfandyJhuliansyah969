@@ -1,0 +1,88 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Penilaian Mahasiswa: <%= course.code %> - <%= course.name %></h1>
+    <p class="page-subtitle">Kelola dan perbarui nilai tugas, UTS, UAS, dan feedback akademik mahasiswa.</p>
+  </div>
+  <div>
+    <a href="/lecturer/dashboard" class="btn btn-secondary">⬅️ Kembali ke Dashboard</a>
+  </div>
+</div>
+
+<% if (success) { %>
+  <div class="alert alert-success"><%= success %></div>
+<% } %>
+<% if (error) { %>
+  <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<div class="card">
+  <div class="card-title">
+    <span>📋 Daftar Peserta Kelas & Lembar Penilaian</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>NIM</th>
+          <th>Nama Mahasiswa</th>
+          <th>Tugas (30%)</th>
+          <th>UTS (30%)</th>
+          <th>UAS (40%)</th>
+          <th>Huruf</th>
+          <th>Catatan / Feedback</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (students.length === 0) { %>
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted);">Tidak ada mahasiswa yang terdaftar di kelas ini.</td>
+          </tr>
+        <% } else { %>
+          <% students.forEach(s => { %>
+            <tr>
+              <form action="/lecturer/course/grade" method="POST">
+                <% if (typeof csrfToken !== 'undefined') { %>
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <% } %>
+                <input type="hidden" name="enrollment_id" value="<%= s.enrollment_id %>">
+                <input type="hidden" name="student_id" value="<%= s.student_id %>">
+                <input type="hidden" name="course_id" value="<%= course.id %>">
+
+                <td><code><%= s.nim %></code></td>
+                <td><strong><%= s.full_name %></strong></td>
+                <td>
+                  <input type="number" step="0.1" min="0" max="100" name="task_score" value="<%= s.task_score || 0 %>" class="form-control" style="width: 80px; padding: 0.3rem 0.5rem;">
+                </td>
+                <td>
+                  <input type="number" step="0.1" min="0" max="100" name="midterm_score" value="<%= s.midterm_score || 0 %>" class="form-control" style="width: 80px; padding: 0.3rem 0.5rem;">
+                </td>
+                <td>
+                  <input type="number" step="0.1" min="0" max="100" name="final_score" value="<%= s.final_score || 0 %>" class="form-control" style="width: 80px; padding: 0.3rem 0.5rem;">
+                </td>
+                <td>
+                  <span class="badge-tag" style="background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7; font-weight: bold; font-size: 0.95rem;">
+                    <%= s.letter_grade || '-' %>
+                  </span>
+                </td>
+                <td>
+                  <input type="text" name="feedback" value="<%= s.feedback || '' %>" placeholder="Catatan untuk mahasiswa..." class="form-control" style="padding: 0.3rem 0.5rem;">
+                </td>
+                <td>
+                  <button type="submit" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                    Simpan Nilai
+                  </button>
+                </td>
+              </form>
+            </tr>
+          <% }); %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

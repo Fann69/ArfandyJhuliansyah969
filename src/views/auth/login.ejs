@@ -1,0 +1,116 @@
+<%- include('../partials/header') %>
+
+<div style="max-width: 900px; margin: 1.5rem auto;">
+  <div class="grid-2" style="align-items: stretch;">
+    <!-- Form Login -->
+    <div class="card" style="margin-bottom: 0;">
+      <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem;">Masuk ke Portal</h2>
+      <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">
+        Gunakan kredensial akun sintetis praktikum di bawah ini untuk menguji hak akses peran masing-masing.
+      </p>
+
+      <% if (error) { %>
+        <div class="alert alert-danger"><%= error %></div>
+      <% } %>
+      <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+      <% } %>
+
+      <form action="/auth/login" method="POST" id="loginForm">
+        <% if (typeof csrfToken !== 'undefined') { %>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% } %>
+
+        <div class="form-group">
+          <label class="form-label" for="username">Username atau Email</label>
+          <input type="text" id="username" name="username" class="form-control" placeholder="Contoh: mhs1 atau admin" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Kata Sandi</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
+          Masuk ke Akun
+        </button>
+      </form>
+
+      <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+        Mode aktif saat ini: 
+        <strong style="color: <%= labMode === 'vulnerable' ? 'var(--vuln-red)' : 'var(--secure-green)' %>;">
+          <%= labMode.toUpperCase() %>
+        </strong>
+      </div>
+    </div>
+
+    <!-- Akun Sintetis Praktikum -->
+    <div class="card" style="margin-bottom: 0; background-color: rgba(30, 41, 59, 0.5);">
+      <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>🔑 Akun Sintetis Praktikum</span>
+      </h3>
+      <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+        Klik salah satu akun di bawah ini untuk mengisi formulir login secara otomatis:
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <!-- Admin -->
+        <div style="background-color: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;"
+             onclick="fillLogin('admin', 'Admin@123')">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #f8fafc; font-size: 0.9rem;">Administrator</strong>
+            <span class="badge-tag badge-role">ADMIN</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+            Username: <code>admin</code> | Sandi: <code>Admin@123</code>
+          </div>
+        </div>
+
+        <!-- Dosen 1 -->
+        <div style="background-color: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;"
+             onclick="fillLogin('dosen1', 'Dosen@123')">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #f8fafc; font-size: 0.9rem;">Dr. Budi Hartono (Dosen)</strong>
+            <span class="badge-tag" style="background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7;">DOSEN</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+            Username: <code>dosen1</code> | Sandi: <code>Dosen@123</code>
+          </div>
+        </div>
+
+        <!-- Mahasiswa 1 -->
+        <div style="background-color: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;"
+             onclick="fillLogin('mhs1', 'Mahasiswa@123')">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #f8fafc; font-size: 0.9rem;">Ahmad Fauzi (Mahasiswa A)</strong>
+            <span class="badge-tag" style="background-color: rgba(59, 130, 246, 0.2); color: #93c5fd;">MAHASISWA</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+            Username: <code>mhs1</code> (ID: 1) | Sandi: <code>Mahasiswa@123</code>
+          </div>
+        </div>
+
+        <!-- Mahasiswa 2 -->
+        <div style="background-color: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;"
+             onclick="fillLogin('mhs2', 'Mahasiswa@123')">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #f8fafc; font-size: 0.9rem;">Citra Dewi (Mahasiswa B)</strong>
+            <span class="badge-tag" style="background-color: rgba(59, 130, 246, 0.2); color: #93c5fd;">MAHASISWA</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+            Username: <code>mhs2</code> (ID: 2) | Sandi: <code>Mahasiswa@123</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function fillLogin(u, p) {
+    document.getElementById('username').value = u;
+    document.getElementById('password').value = p;
+  }
+</script>
+
+<%- include('../partials/footer') %>

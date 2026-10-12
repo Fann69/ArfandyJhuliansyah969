@@ -1,0 +1,269 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">⚖️ Matriks Perbandingan: Mode RENTAN vs Mode AMAN</h1>
+    <p class="page-subtitle">Analisis komparatif arsitektur backend, pola kode (code patterns), dan kontrol keamanan untuk 8 skenario OWASP.</p>
+  </div>
+  <div>
+    <a href="/lab" class="btn btn-secondary">⬅️ Kembali ke Dashboard Lab</a>
+  </div>
+</div>
+
+<!-- Penjelasan Prinsip Arsitektur -->
+<div class="grid-2" style="margin-bottom: 1.5rem;">
+  <div class="card" style="border-top: 4px solid var(--vuln-red); background: rgba(239, 68, 68, 0.04);">
+    <div class="card-title" style="color: #fca5a5;">
+      <span>⚠️ Karakteristik Arsitektur Mode RENTAN</span>
+    </div>
+    <ul style="margin-left: 1.25rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.7;">
+      <li>Query basis data dibuat dengan penggabungan string (concatenation).</li>
+      <li>Data masukan pengguna dirender mentah (raw innerHTML / unescaped tags).</li>
+      <li>Hak akses objek hanya bergantung pada parameter yang dikirim klien (IDOR).</li>
+      <li>Permintaan POST tidak memvalidasi Anti-CSRF Token.</li>
+      <li>Percobaan login tanpa batas dan pesan error membocorkan username.</li>
+      <li>Berkas disimpan dengan nama asli dan ekstensi berbahaya tanpa whitelist.</li>
+      <li>Logout hanya menghapus cookie browser; sesi server tetap hidup.</li>
+      <li>Otorisasi role hanya disembunyikan di tampilan antarmuka (frontend).</li>
+    </ul>
+  </div>
+
+  <div class="card" style="border-top: 4px solid var(--secure-green); background: rgba(16, 185, 129, 0.04);">
+    <div class="card-title" style="color: #6ee7b7;">
+      <span>🛡️ Karakteristik Arsitektur Mode AMAN</span>
+    </div>
+    <ul style="margin-left: 1.25rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.7;">
+      <li>Seluruh query menggunakan Prepared Statements / Parameterized Queries.</li>
+      <li>Context-Aware Output Encoding (HTML entity encoding) pada semua data dinamis.</li>
+      <li>Verifikasi kepemilikan objek (Object-Level Authorization) di sisi backend.</li>
+      <li>Synchronizer Token Pattern (CSRF Token) wajib pada setiap mutasi data.</li>
+      <li>Rate Limiter memblokir brute-force dan pesan kesalahan seragam/generik.</li>
+      <li>Whitelist ekstensi ketat (.pdf, .docx, .zip), batas 5MB, dan nama file UUID acak.</li>
+      <li>Sesi server dihancurkan permanen (req.session.destroy) dan invalidasi version.</li>
+      <li>Middleware otorisasi backend ketat (requireRole) di setiap endpoint sensitif.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Tabel Komparasi 8 Skenario -->
+<div class="card">
+  <div class="card-title">
+    <span>📊 Matriks Komparatif 8 Skenario OWASP</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 15%;">Skenario</th>
+          <th style="width: 40%; color: #fca5a5;">Implementasi Mode RENTAN</th>
+          <th style="width: 45%; color: #6ee7b7;">Implementasi Mode AMAN</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Skenario 1 -->
+        <tr>
+          <td>
+            <strong>#1 SQL Injection</strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">A03:2021 - Injection</div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// RENTAN: String Concatenation
+db.rawQuery(`SELECT * FROM courses 
+ WHERE code LIKE '%${q}%'`);</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Payload Boolean <code>' OR '1'='1</code> memanipulasi klausa WHERE dan mengembalikan seluruh record.
+            </div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// AMAN: Parameterized Query
+db.query(`SELECT * FROM courses 
+ WHERE code LIKE ?`, [`%${q}%`]);</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Nilai diperlakukan sebagai literal teks murni sehingga injeksi tidak mungkin mengubah sintaks query.
+            </div>
+          </td>
+        </tr>
+
+        <!-- Skenario 2 -->
+        <tr>
+          <td>
+            <strong>#2 Stored XSS</strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">A03:2021 - Injection</div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// RENTAN: Raw HTML Rendering
+&lt;div class="content"&gt;
+  &lt;%- discussion.content %&gt;
+&lt;/div&gt;</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Tag <code>&lt;script&gt;</code> atau <code>&lt;img onerror=...&gt;</code> dieksekusi langsung di DOM korban.
+            </div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// AMAN: Output HTML Encoding
+&lt;div class="content"&gt;
+  &lt;%= discussion.content %&gt;
+&lt;/div&gt;</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Karakter khusus dikonversi ke entitas aman seperti <code>&amp;lt;</code> dan <code>&amp;gt;</code>.
+            </div>
+          </td>
+        </tr>
+
+        <!-- Skenario 3 -->
+        <tr>
+          <td>
+            <strong>#3 IDOR</strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">A01:2021 - Broken Access Control</div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// RENTAN: Tanpa Pengecekan Pemilik
+const id = req.params.studentId;
+return db.query(`SELECT * FROM grades 
+ WHERE student_id = ?`, [id]);</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Mahasiswa A dapat membaca transkrip Mahasiswa B cukup dengan mengganti nomor ID pada URL.
+            </div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// AMAN: Object Ownership Check
+if (user.role === 'student' &amp;&amp; 
+    user.student_id !== requestedId) {
+  return res.status(403).json(...);
+}</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Backend memverifikasi kesesuaian antara subjek pada sesi terautentikasi dan identifier objek.
+            </div>
+          </td>
+        </tr>
+
+        <!-- Skenario 4 -->
+        <tr>
+          <td>
+            <strong>#4 CSRF</strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">A01:2021 - Broken Access Control</div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// RENTAN: POST Tanpa Validasi Token
+router.post('/update-email', 
+  authController.updateEmail);</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Permintaan lintas situs dapat memicu pembaruan email tanpa izin pengguna aktif.
+            </div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// AMAN: Anti-CSRF Token Validation
+if (req.body._csrf !== req.session.csrfToken) {
+  return res.status(403).json(...);
+}</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Setiap formulir mutasi menyertakan token unik tak tertebak yang divalidasi ketat oleh server.
+            </div>
+          </td>
+        </tr>
+
+        <!-- Skenario 5 -->
+        <tr>
+          <td>
+            <strong>#5 Brute Force</strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">A07:2021 - Identification &amp; Auth</div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// RENTAN: Verbose &amp; Tanpa Limit
+if (!user) res.send("User tidak terdaftar");
+if (!pwd) res.send("Sandi salah");</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Penebakan kata sandi dapat diulang ribuan kali dan username valid dapat diidentifikasi.
+            </div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// AMAN: Rate Limit &amp; Pesan Generik
+app.use(loginRateLimiter(max 5/menit));
+res.send("Email atau sandi tidak valid.");</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Pemblokiran sementara dengan HTTP 429 dan kerahasiaan keberadaan akun tetap terlindungi.
+            </div>
+          </td>
+        </tr>
+
+        <!-- Skenario 6 -->
+        <tr>
+          <td>
+            <strong>#6 File Upload</strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">A05:2021 - Security Misconfiguration</div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// RENTAN: Nama &amp; Ekstensi Bebas
+fs.rename(file.path, 
+  `uploads/${file.originalname}`);</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Berkas skrip berbahaya (misal <code>.php</code>) dapat diunggah ke server.
+            </div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// AMAN: Whitelist &amp; Random UUID
+if (!['.pdf','.docx','.zip'].includes(ext))
+  return res.status(400)...;
+const safeName = `${crypto.randomUUID()}${ext}`;</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Hanya format dokumen yang disetujui, batas 5MB, dan direktori non-executable.
+            </div>
+          </td>
+        </tr>
+
+        <!-- Skenario 7 -->
+        <tr>
+          <td>
+            <strong>#7 Broken Session</strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">A07:2021 - Identification &amp; Auth</div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// RENTAN: Hanya Hapus Cookie
+res.clearCookie('connect.sid');
+// req.session di server TIDAK dimatikan</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Session ID lama tetap dapat digunakan kembali setelah proses logout atau pergantian password.
+            </div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// AMAN: Session Destroy &amp; Version
+req.session.destroy();
+await db.query(`UPDATE users SET 
+ session_version = session_version + 1`);</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Pemusnahan total sesi di server dan pembatalan otomatis seluruh sesi lama saat kata sandi berubah.
+            </div>
+          </td>
+        </tr>
+
+        <!-- Skenario 8 -->
+        <tr>
+          <td>
+            <strong>#8 Privilege Escalation</strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">A01:2021 - Broken Access Control</div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// RENTAN: Tombol Hanya Sembunyi di UI
+router.get('/api/admin/users', 
+  adminController.getUsers);</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Klien non-admin dapat langsung menembak API backend tanpa verifikasi role server.
+            </div>
+          </td>
+          <td>
+            <div class="code-box" style="margin: 0; font-size: 0.75rem;">// AMAN: Backend Role Middleware
+router.get('/api/admin/users',
+  requireRole(['admin']), 
+  adminController.getUsers);</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Backend memvalidasi role dari sesi server tepercaya dan mengembalikan HTTP 403 Forbidden bila tidak berhak.
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

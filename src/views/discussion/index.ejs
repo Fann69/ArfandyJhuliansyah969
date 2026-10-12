@@ -1,0 +1,135 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Forum Diskusi Akademik</h1>
+    <p class="page-subtitle">Diskusikan materi kuliah, praktikum, dan materi pembelajaran bersama dosen dan sesama mahasiswa.</p>
+  </div>
+  <div>
+    <a href="/lab/scenario/2" class="btn btn-secondary">🧪 Uji Kerentanan Stored XSS</a>
+  </div>
+</div>
+
+<% if (success) { %>
+  <div class="alert alert-success"><%= success %></div>
+<% } %>
+<% if (error) { %>
+  <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<!-- Notice Skenario 2 -->
+<div class="card" style="border-left: 4px solid var(--accent-purple);">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem;">
+        🎯 Titik Pengujian Skenario 2: Stored Cross-Site Scripting (Stored XSS)
+      </h3>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">
+        Forum ini menyimpan pesan ke basis data. Pada <strong>Mode RENTAN</strong>, input dirender tanpa HTML encoding sehingga event handler (seperti <code>&lt;img src=x onerror=alert(1)&gt;</code>) dapat dieksekusi oleh peramban. Pada <strong>Mode AMAN</strong>, karakter khusus di-encode menjadi entitas HTML.
+      </p>
+    </div>
+    <button type="button" class="btn btn-secondary" style="font-size: 0.8rem;" onclick="fillXssPayload()">
+      ⚡ Isi Payload Uji XSS
+    </button>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Daftar Diskusi -->
+  <div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h2 style="font-size: 1.15rem; font-weight: 600;">💬 Alur Diskusi Terkini</h2>
+      <form method="GET" action="/discussions" style="margin: 0;">
+        <select name="course_id" class="form-control" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;" onchange="this.form.submit()">
+          <% courses.forEach(c => { %>
+            <option value="<%= c.id %>" <%= c.id === selectedCourseId ? 'selected' : '' %>>
+              <%= c.code %> - <%= c.name %>
+            </option>
+          <% }); %>
+        </select>
+      </form>
+    </div>
+
+    <% if (discussions.length === 0) { %>
+      <div class="card" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+        Belum ada diskusi untuk mata kuliah ini. Jadilah yang pertama memulai!
+      </div>
+    <% } else { %>
+      <% discussions.forEach(d => { %>
+        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <div>
+              <strong style="color: #fff;"><%= d.author_name %></strong>
+              <span class="badge-tag" style="margin-left: 0.4rem; font-size: 0.7rem; background-color: var(--bg-surface);">
+                <%= d.author_role.toUpperCase() %>
+              </span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">
+              <%= new Date(d.created_at).toLocaleString('id-ID') %>
+            </span>
+          </div>
+
+          <% if (d.title) { %>
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--accent-indigo);">
+              <% if (d.isRawHtml) { %>
+                <%- d.title %>
+              <% } else { %>
+                <%= d.title %>
+              <% } %>
+            </h4>
+          <% } %>
+
+          <!-- Render Konten: RENTAN (<%-) vs AMAN (<%=) -->
+          <div style="font-size: 0.9rem; color: var(--text-primary); line-height: 1.5; background-color: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            <% if (d.isRawHtml) { %>
+              <!-- MODE RENTAN: Render HTML mentah -->
+              <%- d.content %>
+            <% } else { %>
+              <!-- MODE AMAN: Render aman dengan escaping otomatis -->
+              <%= d.content %>
+            <% } %>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+  </div>
+
+  <!-- Form Kirim Komentar -->
+  <div>
+    <div class="card">
+      <div class="card-title">
+        <span>✍️ Tulis Tanggapan / Diskusi Baru</span>
+      </div>
+
+      <form action="/discussions/post" method="POST" id="discussionForm">
+        <% if (typeof csrfToken !== 'undefined') { %>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% } %>
+        <input type="hidden" name="course_id" value="<%= selectedCourseId %>">
+
+        <div class="form-group">
+          <label class="form-label" for="title">Judul Topik (Opsional)</label>
+          <input type="text" name="title" id="discussionTitle" class="form-control" placeholder="Contoh: Pertanyaan Tugas Praktikum">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="content">Isi Tanggapan Diskusi</label>
+          <textarea name="content" id="discussionContent" class="form-control" rows="5" placeholder="Tulis komentar atau masukkan payload uji..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Kirim Komentar ke Forum
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function fillXssPayload() {
+    document.getElementById('discussionTitle').value = 'Uji Keamanan Stored XSS';
+    document.getElementById('discussionContent').value = '<img src=x onerror="alert(\'PERINGATAN LAB: Kerentanan Stored XSS Berhasil Dipicu!\')">';
+  }
+</script>
+
+<%- include('../partials/footer') %>

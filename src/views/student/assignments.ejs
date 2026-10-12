@@ -1,0 +1,141 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Pengumpulan Tugas Akademik</h1>
+    <p class="page-subtitle">Unggah laporan praktikum dan tugas kuliah sesuai batas waktu yang ditentukan.</p>
+  </div>
+  <div>
+    <a href="/lab/scenario/6" class="btn btn-secondary">🧪 Uji Kerentanan File Upload</a>
+  </div>
+</div>
+
+<% if (success) { %>
+  <div class="alert alert-success"><%= success %></div>
+<% } %>
+<% if (error) { %>
+  <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<div class="grid-2">
+  <!-- Form Unggah Berkas -->
+  <div class="card">
+    <div class="card-title">
+      <span>📤 Unggah Berkas Tugas</span>
+    </div>
+
+    <form action="/student/assignments/upload" method="POST" enctype="multipart/form-data">
+      <% if (typeof csrfToken !== 'undefined') { %>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% } %>
+
+      <div class="form-group">
+        <label class="form-label" for="assignment_id">Pilih Tugas</label>
+        <select name="assignment_id" id="assignment_id" class="form-control" required>
+          <% assignments.forEach(a => { %>
+            <option value="<%= a.id %>"><%= a.code %> - <%= a.title %></option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="file">Pilih Berkas</label>
+        <input type="file" name="file" id="file" class="form-control" required>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">
+          Format diizinkan di Mode AMAN: <strong>.pdf, .docx, .zip</strong> (Maks 5 MB).<br>
+          <span style="color: var(--vuln-red);">Di Mode RENTAN: Server tidak memvalidasi ekstensi berbahaya (misal: .php, .html).</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="notes">Catatan Tambahan (Opsional)</label>
+        <textarea name="notes" id="notes" class="form-control" rows="3" placeholder="Tuliskan catatan untuk dosen pengampu..."></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Kirim Tugas Sekarang
+      </button>
+    </form>
+  </div>
+
+  <!-- Petunjuk Praktikum Skenario 6 -->
+  <div class="card" style="background-color: rgba(30, 41, 59, 0.4);">
+    <div class="card-title">
+      <span>🔬 Skenario 6: Validasi Berkas Unggahan</span>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+      <p style="margin-bottom: 0.75rem;">
+        Pada aplikasi yang rentan, unggahan berkas hanya diperiksa di sisi browser (JavaScript frontend) atau tidak memverifikasi whitelist server-side.
+      </p>
+      <div style="background-color: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 0.75rem;">
+        <strong style="color: #f8fafc;">Langkah Uji Lab:</strong>
+        <ol style="margin-left: 1.25rem; margin-top: 0.35rem;">
+          <li>Buat berkas uji teks biasa, lalu ubah nama menjadi <code>test_shell.php</code>.</li>
+          <li>Unggah berkas tersebut di <strong>Mode RENTAN</strong>. Hasil: Berkas berhasil disimpan ke disk server!</li>
+          <li>Beralih ke <strong>Mode AMAN</strong>, lalu coba unggah kembali. Hasil: Server menolak dengan validasi whitelist 400 Bad Request.</li>
+        </ol>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.8rem;">
+        Catatan Keamanan: Direktori uploads dinonaktifkan dari eksekusi server-side untuk memastikan lab tetap aman.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Riwayat Pengumpulan Tugas -->
+<div class="card">
+  <div class="card-title">
+    <span>📋 Riwayat Pengumpulan Tugas</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Mata Kuliah</th>
+          <th>Judul Tugas</th>
+          <th>Nama Berkas</th>
+          <th>Ukuran</th>
+          <th>Waktu Pengumpulan</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (assignments.length === 0) { %>
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-muted);">Tidak ada riwayat pengumpulan tugas.</td>
+          </tr>
+        <% } else { %>
+          <% assignments.forEach(a => { %>
+            <tr>
+              <td><code><%= a.code %></code></td>
+              <td><strong><%= a.title %></strong></td>
+              <td>
+                <% if (a.original_filename) { %>
+                  <a href="/<%= a.file_path || 'uploads' %>" target="_blank" style="color: var(--accent-indigo); text-decoration: none;">
+                    📄 <%= a.original_filename %>
+                  </a>
+                <% } else { %>
+                  <span style="color: var(--text-muted);">-</span>
+                <% } %>
+              </td>
+              <td><%= a.file_size ? (a.file_size / 1024).toFixed(1) + ' KB' : '-' %></td>
+              <td>
+                <%= a.submitted_at ? new Date(a.submitted_at).toLocaleString('id-ID') : '-' %>
+              </td>
+              <td>
+                <% if (a.submission_id) { %>
+                  <span class="badge-tag" style="background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7;">Sudah Dikumpulkan</span>
+                <% } else { %>
+                  <span class="badge-tag" style="background-color: rgba(239, 68, 68, 0.2); color: #fca5a5;">Belum Ada Berkas</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

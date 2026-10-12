@@ -1,0 +1,158 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Manajemen Akun Pengguna Kampus</h1>
+    <p class="page-subtitle">Kelola akun administrator, dosen, dan mahasiswa sintetis untuk keperluan lab.</p>
+  </div>
+  <div>
+    <a href="/lab/scenario/8" class="btn btn-secondary">🧪 Uji Privilege Escalation</a>
+  </div>
+</div>
+
+<% if (success) { %>
+  <div class="alert alert-success"><%= success %></div>
+<% } %>
+<% if (error) { %>
+  <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<div class="grid-2">
+  <!-- Form Tambah User -->
+  <div class="card">
+    <div class="card-title">
+      <span>➕ Tambah Pengguna Baru</span>
+    </div>
+
+    <form action="/admin/users/create" method="POST">
+      <% if (typeof csrfToken !== 'undefined') { %>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% } %>
+
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input type="text" name="username" id="username" class="form-control" placeholder="Contoh: mhs4 atau dosen3" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Alamat Email</label>
+        <input type="email" name="email" id="email" class="form-control" placeholder="Contoh: user@kampuslab.ac.id" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="full_name">Nama Lengkap</label>
+        <input type="text" name="full_name" id="full_name" class="form-control" placeholder="Nama lengkap..." required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Kata Sandi Awal</label>
+        <input type="password" name="password" id="password" class="form-control" placeholder="Minimal 6 karakter" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="role">Peran (Role)</label>
+        <select name="role" id="role" class="form-control" required onchange="toggleRoleFields(this.value)">
+          <option value="student">Mahasiswa (student)</option>
+          <option value="lecturer">Dosen (lecturer)</option>
+          <option value="admin">Administrator (admin)</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="identifierGroup">
+        <label class="form-label" id="identifierLabel" for="identifier">NIM Mahasiswa</label>
+        <input type="text" name="identifier" id="identifier" class="form-control" placeholder="Contoh: 202401004">
+      </div>
+
+      <div class="form-group" id="detailFieldGroup">
+        <label class="form-label" id="detailFieldLabel" for="detail_field">Program Studi</label>
+        <input type="text" name="detail_field" id="detail_field" class="form-control" placeholder="Contoh: Teknik Informatika">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Simpan Akun Pengguna
+      </button>
+    </form>
+  </div>
+
+  <!-- Catatan Eksploitasi Skenario 8 -->
+  <div class="card" style="background-color: rgba(30, 41, 59, 0.4);">
+    <div class="card-title">
+      <span>🎯 Titik Uji Skenario 8: Privilege Escalation</span>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+      <p style="margin-bottom: 0.75rem;">
+        Pada aplikasi yang hanya menyembunyikan navigasi di sisi antarmuka tanpa middleware otorisasi di sisi backend, seorang mahasiswa dapat langsung mengakses endpoint admin <code>/api/admin/users</code>.
+      </p>
+
+      <div class="code-box">curl -X GET http://localhost:3000/api/admin/users \
+  -H "Cookie: connect.sid=[COOKIE_MAHASISWA]"</div>
+
+      <p style="margin-top: 0.75rem;">
+        <strong>Mode RENTAN:</strong> Permintaan mahasiswa diterima dan seluruh data akun kampus dikembalikan.<br>
+        <strong>Mode AMAN:</strong> Backend mengeksekusi <code>requireRole(['admin'])</code> dan menolak akses dengan HTTP 403 Forbidden.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Daftar Pengguna -->
+<div class="card">
+  <div class="card-title">
+    <span>👥 Seluruh Pengguna Sistem</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Nama Lengkap</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Identitas (NIM/NIDN)</th>
+          <th>Departemen / Prodi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(u => { %>
+          <tr>
+            <td><code><%= u.id %></code></td>
+            <td><strong><%= u.username %></strong></td>
+            <td><%= u.full_name %></td>
+            <td><%= u.email %></td>
+            <td>
+              <span class="badge-tag" style="
+                background-color: <%= u.role === 'admin' ? 'rgba(239, 68, 68, 0.2)' : (u.role === 'lecturer' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)') %>;
+                color: <%= u.role === 'admin' ? '#fca5a5' : (u.role === 'lecturer' ? '#6ee7b7' : '#93c5fd') %>;
+              ">
+                <%= u.role.toUpperCase() %>
+              </span>
+            </td>
+            <td><code><%= u.nim || u.nidn || '-' %></code></td>
+            <td><%= u.program_study || u.department || '-' %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  function toggleRoleFields(role) {
+    const idLabel = document.getElementById('identifierLabel');
+    const dfLabel = document.getElementById('detailFieldLabel');
+    if (role === 'student') {
+      idLabel.textContent = 'NIM Mahasiswa';
+      dfLabel.textContent = 'Program Studi';
+    } else if (role === 'lecturer') {
+      idLabel.textContent = 'NIDN Dosen';
+      dfLabel.textContent = 'Departemen / Jurusan';
+    } else {
+      idLabel.textContent = 'Nomor Induk Admin';
+      dfLabel.textContent = 'Bagian / Divisi';
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>

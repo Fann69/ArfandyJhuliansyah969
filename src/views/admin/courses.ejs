@@ -1,0 +1,127 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Manajemen Mata Kuliah & Kelas</h1>
+    <p class="page-subtitle">Kelola kurikulum, beban SKS, dan penugasan dosen pengampu kelas lab.</p>
+  </div>
+</div>
+
+<% if (success) { %>
+  <div class="alert alert-success"><%= success %></div>
+<% } %>
+<% if (error) { %>
+  <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<div class="grid-2">
+  <!-- Form Tambah Mata Kuliah -->
+  <div class="card">
+    <div class="card-title">
+      <span>➕ Tambah Mata Kuliah Baru</span>
+    </div>
+
+    <form action="/admin/courses/create" method="POST">
+      <% if (typeof csrfToken !== 'undefined') { %>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% } %>
+
+      <div class="form-group">
+        <label class="form-label" for="code">Kode Mata Kuliah</label>
+        <input type="text" name="code" id="code" class="form-control" placeholder="Contoh: IF403" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="name">Nama Mata Kuliah</label>
+        <input type="text" name="name" id="name" class="form-control" placeholder="Contoh: Kriptografi Terapan" required>
+      </div>
+
+      <div class="grid-2" style="gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="credits">Bobot SKS</label>
+          <input type="number" name="credits" id="credits" class="form-control" value="3" min="1" max="6" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="semester">Semester</label>
+          <input type="number" name="semester" id="semester" class="form-control" value="4" min="1" max="8" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="lecturer_id">Dosen Pengampu</label>
+        <select name="lecturer_id" id="lecturer_id" class="form-control" required>
+          <% lecturers.forEach(l => { %>
+            <option value="<%= l.lecturer_id %>"><%= l.full_name %></option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="description">Deskripsi Silabus</label>
+        <textarea name="description" id="description" class="form-control" rows="2" placeholder="Deskripsi materi mata kuliah..."></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Simpan Mata Kuliah
+      </button>
+    </form>
+  </div>
+
+  <!-- Petunjuk Pencarian SQL Injection -->
+  <div class="card" style="background-color: rgba(30, 41, 59, 0.4);">
+    <div class="card-title">
+      <span>🎯 Titik Uji Skenario 1: SQL Injection</span>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+      <p style="margin-bottom: 0.75rem;">
+        Tabel mata kuliah ini merupakan target demonstrasi untuk Skenario 1 (SQL Injection) pada endpoint pencarian:
+      </p>
+      <div class="code-box">GET /api/courses/search?q=' OR '1'='1</div>
+      <p style="margin-top: 0.75rem;">
+        Di <strong>Mode RENTAN</strong>, query dirangkai via string concatenation sehingga payload Boolean mengekspos semua mata kuliah.<br>
+        Di <strong>Mode AMAN</strong>, parameterized query memblokir injeksi dan mencari literal string secara aman.
+      </p>
+      <div style="margin-top: 1rem;">
+        <a href="/lab/scenario/1" class="btn btn-secondary" style="font-size: 0.8rem;">
+          🔬 Buka Simulator SQL Injection
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Daftar Mata Kuliah -->
+<div class="card">
+  <div class="card-title">
+    <span>📚 Daftar Mata Kuliah Tersedia</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Kode</th>
+          <th>Nama Mata Kuliah</th>
+          <th>SKS</th>
+          <th>Semester</th>
+          <th>Dosen Pengampu</th>
+          <th>Deskripsi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% courses.forEach(c => { %>
+          <tr>
+            <td><code><%= c.code %></code></td>
+            <td><strong><%= c.name %></strong></td>
+            <td><%= c.credits %> SKS</td>
+            <td>Semester <%= c.semester %></td>
+            <td><%= c.lecturer_name %></td>
+            <td style="color: var(--text-secondary); font-size: 0.85rem;"><%= c.description || '-' %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,128 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard Dosen Pengampu</h1>
+    <p class="page-subtitle">Selamat datang, <strong><%= lecturer ? lecturer.full_name : user.full_name %></strong> (<%= lecturer ? lecturer.title : '' %>)</p>
+  </div>
+</div>
+
+<!-- Statistik Dosen -->
+<div class="grid-3" style="margin-bottom: 1.5rem;">
+  <div class="stat-card">
+    <div class="stat-icon">🆔</div>
+    <div>
+      <div class="stat-val"><%= lecturer ? lecturer.nidn : '-' %></div>
+      <div class="stat-label">Nomor Induk Dosen Nasional (NIDN)</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">🏛️</div>
+    <div>
+      <div class="stat-val" style="font-size: 1.2rem;"><%= lecturer ? lecturer.department : 'Teknik Informatika' %></div>
+      <div class="stat-label">Program Studi / Departemen</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">📚</div>
+    <div>
+      <div class="stat-val"><%= courses.length %></div>
+      <div class="stat-label">Kelas Mata Kuliah Diampu</div>
+    </div>
+  </div>
+</div>
+
+<!-- Daftar Mata Kuliah Diampu -->
+<div class="card">
+  <div class="card-title">
+    <span>📖 Kelas Mata Kuliah Semester Ini</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Kode</th>
+          <th>Nama Mata Kuliah</th>
+          <th>SKS</th>
+          <th>Semester</th>
+          <th>Jumlah Mahasiswa</th>
+          <th>Aksi Pengelolaan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (courses.length === 0) { %>
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-muted);">Belum ada kelas yang ditugaskan.</td>
+          </tr>
+        <% } else { %>
+          <% courses.forEach(c => { %>
+            <tr>
+              <td><code><%= c.code %></code></td>
+              <td><strong><%= c.name %></strong></td>
+              <td><%= c.credits %> SKS</td>
+              <td>Semester <%= c.semester %></td>
+              <td><span class="badge-tag" style="background-color: rgba(99, 102, 241, 0.2); color: #a5b4fc;"><%= c.total_students %> Mahasiswa</span></td>
+              <td style="display: flex; gap: 0.5rem;">
+                <a href="/lecturer/course/<%= c.id %>/students" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                  ⭐ Input & Kelola Nilai
+                </a>
+                <a href="/lecturer/course/<%= c.id %>/submissions" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                  📥 Tugas Mahasiswa
+                </a>
+              </td>
+            </tr>
+          <% }); %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Pengumpulan Tugas Terbaru -->
+<div class="card">
+  <div class="card-title">
+    <span>📥 Pengumpulan Tugas Mahasiswa Terbaru</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Mahasiswa</th>
+          <th>NIM</th>
+          <th>Mata Kuliah</th>
+          <th>Judul Tugas</th>
+          <th>Berkas</th>
+          <th>Waktu Kirim</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (recentSubmissions.length === 0) { %>
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-muted);">Belum ada pengumpulan tugas terbaru.</td>
+          </tr>
+        <% } else { %>
+          <% recentSubmissions.forEach(s => { %>
+            <tr>
+              <td><strong><%= s.student_name %></strong></td>
+              <td><code><%= s.nim %></code></td>
+              <td><code><%= s.course_code %></code></td>
+              <td><%= s.assignment_title %></td>
+              <td>
+                <a href="/lecturer/submission/<%= s.id %>/download" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                  ⬇️ Unduh
+                </a>
+              </td>
+              <td style="font-size: 0.8rem; color: var(--text-secondary);"><%= new Date(s.submitted_at).toLocaleString('id-ID') %></td>
+            </tr>
+          <% }); %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

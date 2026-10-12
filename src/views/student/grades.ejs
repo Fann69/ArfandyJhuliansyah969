@@ -1,0 +1,85 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Transkrip & Nilai Akademik</h1>
+    <p class="page-subtitle">Daftar nilai resmi semester aktif untuk akun mahasiswa yang terdaftar.</p>
+  </div>
+  <div>
+    <a href="/lab/scenario/3" class="btn btn-secondary">🧪 Uji Kerentanan IDOR</a>
+  </div>
+</div>
+
+<!-- Notice Lab Skenario 3 -->
+<div class="card" style="border-left: 4px solid var(--accent-indigo);">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem;">
+        🎯 Titik Pengujian Skenario 3: Insecure Direct Object Reference (IDOR)
+      </h3>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">
+        ID Mahasiswa Anda saat ini adalah <code><%= currentStudentId %></code>. Di Mode RENTAN, coba ubah ID pada permintaan API untuk melihat nilai mahasiswa lain!
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <a href="/api/students/grades/<%= currentStudentId %>" target="_blank" class="btn btn-secondary" style="font-size: 0.8rem;">
+        Buka API Nilai Saya (ID <%= currentStudentId %>)
+      </a>
+      <a href="/api/students/grades/<%= currentStudentId === 1 ? 2 : 1 %>" target="_blank" class="btn btn-danger" style="font-size: 0.8rem;">
+        Uji Akses Nilai Mahasiswa Lain (ID <%= currentStudentId === 1 ? 2 : 1 %>)
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Tabel Nilai -->
+<div class="card">
+  <div class="card-title">
+    <span>📊 Rekapitulasi Nilai Akademik</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Kode</th>
+          <th>Mata Kuliah</th>
+          <th>SKS</th>
+          <th>Nilai Tugas (30%)</th>
+          <th>Nilai UTS (30%)</th>
+          <th>Nilai UAS (40%)</th>
+          <th>Huruf Mutu</th>
+          <th>Catatan Dosen</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (grades.length === 0) { %>
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted);">Belum ada rekapitulasi nilai yang diterbitkan.</td>
+          </tr>
+        <% } else { %>
+          <% grades.forEach(g => { %>
+            <tr>
+              <td><code><%= g.code %></code></td>
+              <td><strong><%= g.course_name %></strong></td>
+              <td><%= g.credits %></td>
+              <td><%= g.task_score %></td>
+              <td><%= g.midterm_score %></td>
+              <td><%= g.final_score %></td>
+              <td>
+                <span class="badge-tag" style="background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7; font-weight: 700; font-size: 0.9rem;">
+                  <%= g.letter_grade %>
+                </span>
+              </td>
+              <td style="color: var(--text-secondary); font-size: 0.85rem;">
+                <%= g.feedback || '-' %>
+              </td>
+            </tr>
+          <% }); %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

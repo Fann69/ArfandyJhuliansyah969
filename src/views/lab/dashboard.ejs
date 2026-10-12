@@ -1,0 +1,158 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">🧪 Dashboard Praktikum Keamanan Web</h1>
+    <p class="page-subtitle">Pusat observasi, pengujian kerentanan, dan verifikasi kontrol keamanan sistem portal kampus fiktif.</p>
+  </div>
+  <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <button class="btn btn-primary" id="btnRunAllLabTests" data-mode="<%= labMode %>">
+      🚀 Jalankan Pengujian Otomatis Semua Skenario
+    </button>
+    <a href="/lab/comparison" class="btn btn-secondary">
+      ⚖️ Matriks Perbandingan Mode
+    </a>
+  </div>
+</div>
+
+<!-- Banner Status Mode Aktif -->
+<div class="card" style="border-left: 4px solid <%= labMode === 'vulnerable' ? 'var(--vuln-red)' : 'var(--secure-green)' %>; background: <%= labMode === 'vulnerable' ? 'linear-gradient(90deg, rgba(239, 68, 68, 0.08), transparent)' : 'linear-gradient(90deg, rgba(16, 185, 129, 0.08), transparent)' %>;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+        <span class="mode-badge <%= labMode %>"><%= labMode.toUpperCase() %></span>
+        <strong style="font-size: 1.1rem; color: #fff;">
+          <%= labMode === 'vulnerable' ? 'Lingkungan Demonstrasi Kerentanan Aktif' : 'Lingkungan Kontrol Keamanan Penuh Aktif' %>
+        </strong>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">
+        <%= labMode === 'vulnerable' 
+          ? 'Sistem sengaja mengizinkan eksploitasi data sintetis untuk keperluan analisis forensik dan edukasi keamanan aplikasi.' 
+          : 'Sistem menerapkan Prepared Statements, Anti-CSRF Token, Whitelist Berkas, Rate Limiter, dan Otorisasi Backend ketat.' %>
+      </p>
+    </div>
+    <div>
+      <form action="/lab/toggle-mode" method="POST" style="margin: 0;">
+        <% if (typeof csrfToken !== 'undefined') { %>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% } %>
+        <input type="hidden" name="mode" value="<%= labMode === 'vulnerable' ? 'secure' : 'vulnerable' %>">
+        <button type="submit" class="btn <%= labMode === 'vulnerable' ? 'btn-success' : 'btn-danger' %>">
+          <%= labMode === 'vulnerable' ? '🛡️ Aktifkan Mode AMAN' : '⚠️ Aktifkan Mode RENTAN' %>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Kotak Konsol Hasil Pengujian Otomatis -->
+<div class="card" style="padding: 1.25rem;">
+  <div class="card-title">
+    <span>🖥️ Konsol Hasil Pengujian Real-Time</span>
+  </div>
+  <div id="allTestsResultBox" class="code-box" style="min-height: 80px; max-height: 250px; overflow-y: auto;">
+Klik tombol "Jalankan Pengujian Otomatis Semua Skenario" di atas untuk memverifikasi perilaku 8 skenario backend secara langsung.
+  </div>
+</div>
+
+<!-- Daftar 8 Skenario Praktikum -->
+<div class="card">
+  <div class="card-title">
+    <span>📋 8 Skenario Kerentanan OWASP Praktikum</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Nama Kerentanan</th>
+          <th>Kategori OWASP</th>
+          <th>Endpoint Uji</th>
+          <th>Tingkat Risiko</th>
+          <th>Status di Mode Aktif</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% scenarios.forEach(s => { %>
+          <tr>
+            <td><strong>#<%= s.id %></strong></td>
+            <td>
+              <a href="/lab/scenario/<%= s.id %>" style="color: #fff; font-weight: 600; text-decoration: none;">
+                <%= s.name %>
+              </a>
+              <div style="font-size: 0.75rem; color: var(--text-muted);"><%= s.explanation.substring(0, 85) %>...</div>
+            </td>
+            <td><span class="badge-tag" style="background-color: var(--bg-surface);"><%= s.category %></span></td>
+            <td><code><%= s.method %> <%= s.endpoint %></code></td>
+            <td>
+              <span class="badge-tag" style="
+                background-color: <%= s.severity === 'CRITICAL' ? 'rgba(239, 68, 68, 0.25)' : (s.severity === 'HIGH' ? 'rgba(245, 158, 11, 0.25)' : 'rgba(59, 130, 246, 0.25)') %>;
+                color: <%= s.severity === 'CRITICAL' ? '#fca5a5' : (s.severity === 'HIGH' ? '#fde047' : '#93c5fd') %>;
+              ">
+                <%= s.severity %>
+              </span>
+            </td>
+            <td>
+              <% if (labMode === 'vulnerable') { %>
+                <span class="badge-tag" style="background-color: var(--vuln-red-bg); color: #fca5a5; border: 1px solid var(--vuln-red-border);">
+                  ⚠️ RENTAN TERBUKTI
+                </span>
+              <% } else { %>
+                <span class="badge-tag" style="background-color: var(--secure-green-bg); color: #6ee7b7; border: 1px solid var(--secure-green-border);">
+                  🛡️ TERLINDUNGI
+                </span>
+              <% } %>
+            </td>
+            <td>
+              <a href="/lab/scenario/<%= s.id %>" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                🔬 Uji & Pelajari
+              </a>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Log Audit Terbaru -->
+<div class="card">
+  <div class="card-title">
+    <span>📜 Log Aktivitas Forensik Terkini</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Waktu</th>
+          <th>Tindakan (Action)</th>
+          <th>Status</th>
+          <th>Mode</th>
+          <th>Detail Aktivitas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% recentLogs.slice(0, 8).forEach(l => { %>
+          <tr>
+            <td style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;"><%= new Date(l.created_at).toLocaleTimeString('id-ID') %></td>
+            <td><code><%= l.action %></code></td>
+            <td>
+              <% if (l.status === 'blocked') { %>
+                <span class="badge-tag" style="background-color: var(--vuln-red-bg); color: #fca5a5;">BLOCKED</span>
+              <% } else { %>
+                <span class="badge-tag" style="background-color: var(--secure-green-bg); color: #6ee7b7;">SUCCESS</span>
+              <% } %>
+            </td>
+            <td><span class="badge-tag <%= l.mode === 'vulnerable' ? 'vulnerable' : 'secure' %>" style="font-size: 0.7rem;"><%= l.mode.toUpperCase() %></span></td>
+            <td style="font-size: 0.85rem; color: var(--text-secondary);"><%= l.details %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

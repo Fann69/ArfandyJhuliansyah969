@@ -1,0 +1,85 @@
+<% 
+  const safeCurrentPath = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : '';
+  const safeUser = (typeof user !== 'undefined') ? user : null;
+  const safeLabMode = (typeof labMode !== 'undefined' && labMode) ? labMode : 'vulnerable';
+%>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Portal Kampus Lab' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <a href="/" class="brand">
+        <div class="brand-icon">🎓</div>
+        <div>
+          <span>Portal Kampus Lab</span>
+          <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: normal;">Praktikum Keamanan Aplikasi Web</div>
+        </div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="/lab" class="<%= safeCurrentPath.startsWith('/lab') ? 'active' : '' %>">🧪 Lab Keamanan</a></li>
+        <li><a href="/lab/comparison" class="<%= safeCurrentPath === '/lab/comparison' ? 'active' : '' %>">⚖️ Matriks Perbandingan</a></li>
+        
+        <% if (safeUser) { %>
+          <% if (safeUser.role === 'student') { %>
+            <li><a href="/student/dashboard" class="<%= safeCurrentPath === '/student/dashboard' ? 'active' : '' %>">Dashboard</a></li>
+            <li><a href="/student/grades" class="<%= safeCurrentPath === '/student/grades' ? 'active' : '' %>">Nilai Saya</a></li>
+            <li><a href="/student/assignments" class="<%= safeCurrentPath === '/student/assignments' ? 'active' : '' %>">Tugas</a></li>
+          <% } else if (safeUser.role === 'lecturer') { %>
+            <li><a href="/lecturer/dashboard" class="<%= safeCurrentPath === '/lecturer/dashboard' ? 'active' : '' %>">Dashboard</a></li>
+          <% } else if (safeUser.role === 'admin') { %>
+            <li><a href="/admin/dashboard" class="<%= safeCurrentPath === '/admin/dashboard' ? 'active' : '' %>">Dashboard</a></li>
+            <li><a href="/admin/users" class="<%= safeCurrentPath === '/admin/users' ? 'active' : '' %>">Pengguna</a></li>
+            <li><a href="/admin/courses" class="<%= safeCurrentPath === '/admin/courses' ? 'active' : '' %>">Mata Kuliah</a></li>
+            <li><a href="/admin/audit-logs" class="<%= safeCurrentPath === '/admin/audit-logs' ? 'active' : '' %>">Log Audit</a></li>
+          <% } %>
+          <li><a href="/discussions" class="<%= safeCurrentPath.startsWith('/discussions') ? 'active' : '' %>">Forum Diskusi</a></li>
+        <% } %>
+      </ul>
+
+      <div class="nav-actions">
+        <!-- Lab Mode Indicator & Switcher -->
+        <% if (safeLabMode === 'vulnerable') { %>
+          <span class="mode-badge vulnerable" title="Aplikasi sedang menjalankan implementasi dengan kelemahan yang disengaja">
+            ⚠️ MODE RENTAN
+          </span>
+          <button class="mode-switch-btn" data-action="toggle-mode" data-target-mode="secure" title="Beralih ke Mode AMAN">
+            🛡️ Beralih Aman
+          </button>
+        <% } else { %>
+          <span class="mode-badge secure" title="Aplikasi menjalankan kontrol keamanan lengkap (Parameterized query, CSRF, Whitelist, dll.)">
+            🛡️ MODE AMAN
+          </span>
+          <button class="mode-switch-btn" data-action="toggle-mode" data-target-mode="vulnerable" title="Beralih ke Mode RENTAN">
+            ⚠️ Beralih Rentan
+          </button>
+        <% } %>
+
+        <% if (safeUser) { %>
+          <div style="display: flex; align-items: center; gap: 0.5rem; border-left: 1px solid var(--border-color); padding-left: 0.75rem;">
+            <a href="/profile" style="color: var(--text-primary); text-decoration: none; font-size: 0.85rem; display: flex; flex-direction: column; text-align: right;">
+              <span style="font-weight: 600;"><%= safeUser.full_name %></span>
+              <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;"><%= safeUser.role %></span>
+            </a>
+            <form action="/auth/logout" method="POST" style="margin: 0;">
+              <% if (typeof csrfToken !== 'undefined') { %>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <% } %>
+              <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;" title="Logout">
+                Keluar
+              </button>
+            </form>
+          </div>
+        <% } else { %>
+          <a href="/auth/login" class="btn btn-primary" style="padding: 0.35rem 0.85rem; font-size: 0.85rem;">Login</a>
+        <% } %>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">

@@ -1,0 +1,230 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+      <a href="/lab" style="color: var(--text-muted); text-decoration: none;">🧪 Lab Keamanan</a>
+      <span style="color: var(--text-muted);">/</span>
+      <span style="color: var(--text-secondary);">Skenario #<%= scenario.id %></span>
+    </div>
+    <h1 class="page-title"><%= scenario.name %></h1>
+    <p class="page-subtitle"><%= scenario.category %> | Tingkat Risiko: <strong style="color: <%= scenario.severity === 'CRITICAL' ? 'var(--vuln-red)' : 'var(--warning-amber)' %>"><%= scenario.severity %></strong></p>
+  </div>
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="/lab" class="btn btn-secondary">⬅️ Daftar Skenario</a>
+  </div>
+</div>
+
+<!-- Penjelasan & Penyebab Teknis -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">
+      <span>📖 Penjelasan Kerentanan</span>
+    </div>
+    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+      <%= scenario.explanation %>
+    </p>
+
+    <div style="margin-top: 1.25rem;">
+      <strong style="font-size: 0.85rem; color: #fff;">Endpoint yang Diuji:</strong>
+      <div style="margin-top: 0.25rem;">
+        <code><%= scenario.method %> <%= scenario.endpoint %></code>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>⚙️ Penyebab Teknis (Technical Root Cause)</span>
+    </div>
+    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+      <%= scenario.technicalCause %>
+    </p>
+
+    <div style="margin-top: 1.25rem;">
+      <strong style="font-size: 0.85rem; color: #fff;">Data Sintetis yang Digunakan:</strong>
+      <div class="code-box" style="margin-top: 0.25rem;"><%= JSON.stringify(scenario.syntheticData, null, 2) %></div>
+    </div>
+  </div>
+</div>
+
+<!-- Interactive Simulator Console -->
+<div class="card" style="border: 1px solid var(--accent-indigo); background: linear-gradient(180deg, rgba(99, 102, 241, 0.05), transparent);">
+  <div class="card-title" style="color: var(--accent-indigo);">
+    <span>⚡ Simulator Pengujian Interaktif (Live Lab Console)</span>
+  </div>
+
+  <% if (scenario.id === 1) { %>
+    <!-- SQL Injection Simulator -->
+    <form id="sqliSimulatorForm" style="margin-bottom: 1rem;">
+      <div class="form-group">
+        <label class="form-label" for="sqliQueryInput">Parameter Pencarian Kode Mata Kuliah (q):</label>
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="text" id="sqliQueryInput" class="form-control" value="' OR '1'='1" required>
+          <button type="submit" class="btn btn-primary">Uji Query</button>
+        </div>
+        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" onclick="document.getElementById('sqliQueryInput').value='IF401'">Isi Input Legitimasi (IF401)</button>
+          <button type="button" class="btn btn-danger" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" onclick="document.getElementById('sqliQueryInput').value='\' OR \'1\'=\'1'">Isi Payload SQLi (' OR '1'='1)</button>
+        </div>
+      </div>
+    </form>
+    <div id="sqliResultConsole" class="code-box">Klik "Uji Query" untuk melihat respon database...</div>
+
+  <% } else if (scenario.id === 2) { %>
+    <!-- Stored XSS Simulator -->
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      Kunjungi langsung forum diskusi akademik untuk mengirim dan melihat rendering payload Stored XSS:
+    </p>
+    <a href="/discussions" class="btn btn-primary">Buka Forum Diskusi Akademik</a>
+
+  <% } else if (scenario.id === 3) { %>
+    <!-- IDOR Simulator -->
+    <form id="idorSimulatorForm" style="margin-bottom: 1rem;">
+      <div class="form-group">
+        <label class="form-label" for="idorStudentIdInput">Target Student ID pada URL (/api/students/grades/:studentId):</label>
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="number" id="idorStudentIdInput" class="form-control" value="2" required>
+          <button type="submit" class="btn btn-primary">Akses Objek</button>
+        </div>
+        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" onclick="document.getElementById('idorStudentIdInput').value='1'">ID Mahasiswa Milik Sendiri (1)</button>
+          <button type="button" class="btn btn-danger" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" onclick="document.getElementById('idorStudentIdInput').value='2'">ID Mahasiswa Lain (2)</button>
+        </div>
+      </div>
+    </form>
+    <div id="idorResultConsole" class="code-box">Klik "Akses Objek" untuk menguji verifikasi kepemilikan backend...</div>
+
+  <% } else if (scenario.id === 4) { %>
+    <!-- CSRF Simulator -->
+    <div style="margin-bottom: 1rem;">
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+        Simulasikan serangan Cross-Site Request Forgery dari tab peramban penyerang tanpa Anti-CSRF Token:
+      </p>
+      <div class="form-group">
+        <label class="form-label" for="forgedEmailInput">Email Palsu yang Akan Disuntikkan (Forged Email):</label>
+        <input type="email" id="forgedEmailInput" class="form-control" value="attacker-spoof@lab-test.local" style="margin-bottom: 0.5rem;">
+        <button type="button" id="btnTriggerCsrfAttack" class="btn btn-danger">
+          💥 Kirim Permintaan POST Palsu (Tanpa Token CSRF)
+        </button>
+      </div>
+    </div>
+    <div id="csrfResultConsole" class="code-box">Klik tombol di atas untuk mensimulasikan permintaan CSRF...</div>
+
+  <% } else if (scenario.id === 5) { %>
+    <!-- Brute Force Simulator -->
+    <div style="margin-bottom: 1rem;">
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+        Jalankan pengujian otomatis 6 percobaan kata sandi salah secara berturut-turut ke endpoint <code>/api/auth/login</code>:
+      </p>
+      <div class="form-group">
+        <label class="form-label" for="bruteUsername">Target Akun Sintetis:</label>
+        <input type="text" id="bruteUsername" class="form-control" value="dosen1" style="max-width: 300px; margin-bottom: 0.5rem;">
+        <button type="button" id="btnRunBruteForce" class="btn btn-primary">
+          🚀 Jalankan 6 Percobaan Login Berturut-turut
+        </button>
+      </div>
+    </div>
+    <div id="bruteResultConsole" class="code-box">Klik tombol di atas untuk menjalankan simulator percobaan login...</div>
+
+  <% } else if (scenario.id === 6) { %>
+    <!-- Weak File Upload Simulator -->
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      Kunjungi modul pengumpulan tugas untuk menguji pengunggahan berkas sah (.pdf, .docx, .zip) vs berkas berbahaya sintetis (.php):
+    </p>
+    <a href="/student/assignments" class="btn btn-primary">Buka Modul Pengumpulan Tugas</a>
+
+  <% } else if (scenario.id === 7) { %>
+    <!-- Broken Session Simulator -->
+    <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+      <p style="margin-bottom: 0.75rem;">
+        Langkah verifikasi Broken Session Management:
+      </p>
+      <ol style="margin-left: 1.25rem; margin-bottom: 0.75rem;">
+        <li>Buka Developer Tools (F12) -> Tab Application/Storage -> Cookies.</li>
+        <li>Salin nilai cookie sesi <code>connect.sid</code> saat sedang login.</li>
+        <li>Klik tombol <strong>Keluar (Logout)</strong>.</li>
+        <li>Kirim kembali HTTP GET ke <code>/student/dashboard</code> dengan menyertakan cookie lama yang disalin.</li>
+        <li><strong>Mode RENTAN:</strong> Sesi server tetap aktif dan mengembalikan profil mahasiswa.</li>
+        <li><strong>Mode AMAN:</strong> Sesi telah dihancurkan di server dan mengembalikan HTTP 401 / redirect login.</li>
+      </ol>
+      <a href="/profile" class="btn btn-secondary">Buka Halaman Profil & Ganti Password</a>
+    </div>
+
+  <% } else if (scenario.id === 8) { %>
+    <!-- Privilege Escalation Simulator -->
+    <div style="margin-bottom: 1rem;">
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+        Uji akses langsung ke endpoint khusus admin <code>/api/admin/users</code> dengan kredensial sesi saat ini:
+      </p>
+      <button type="button" id="btnTestPrivEscalation" class="btn btn-primary">
+        🔍 Uji Akses Endpoint Admin (/api/admin/users)
+      </button>
+    </div>
+    <div id="privResultConsole" class="code-box">Klik tombol di atas untuk menguji otorisasi backend...</div>
+  <% } %>
+</div>
+
+<!-- Langkah Pengujian Step-by-Step -->
+<div class="card">
+  <div class="card-title">
+    <span>📝 Langkah-Langkah Pengujian Laboratorium</span>
+  </div>
+  <ol style="margin-left: 1.25rem; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
+    <% scenario.testingSteps.forEach(step => { %>
+      <li><%= step %></li>
+    <% }); %>
+  </ol>
+</div>
+
+<!-- Hasil yang Diharapkan: Rentan vs Aman -->
+<div class="grid-2">
+  <div class="card" style="border-top: 4px solid var(--vuln-red);">
+    <div class="card-title" style="color: #fca5a5;">
+      <span>⚠️ Hasil yang Diharapkan (Mode RENTAN)</span>
+    </div>
+    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+      <%= scenario.expectedVulnerable %>
+    </p>
+  </div>
+
+  <div class="card" style="border-top: 4px solid var(--secure-green);">
+    <div class="card-title" style="color: #6ee7b7;">
+      <span>🛡️ Hasil yang Diharapkan (Mode AMAN)</span>
+    </div>
+    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+      <%= scenario.expectedSecure %>
+    </p>
+  </div>
+</div>
+
+<!-- Bukti Teknis & Dampak -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">
+      <span>🔍 Bukti Teknis (Tanpa Rahasia Asli)</span>
+    </div>
+    <div class="code-box"><%= scenario.technicalEvidence %></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>💥 Penjelasan Dampak Keamanan (Impact)</span>
+    </div>
+    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+      <%= scenario.impact %>
+    </p>
+  </div>
+</div>
+
+<!-- Rekomendasi Perbaikan -->
+<div class="card" style="border-left: 4px solid var(--secure-green);">
+  <div class="card-title" style="color: #6ee7b7;">
+    <span>✅ Rekomendasi Perbaikan & Mitigasi (Secure Coding)</span>
+  </div>
+  <p style="font-size: 0.95rem; color: var(--text-primary); line-height: 1.6;">
+    <%= scenario.remediation %>
+  </p>
+</div>
+
+<%- include('../partials/footer') %>

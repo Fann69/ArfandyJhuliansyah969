@@ -1,0 +1,60 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Peninjauan Pengumpulan Tugas: <%= course ? course.code + ' - ' + course.name : 'Kelas' %></h1>
+    <p class="page-subtitle">Daftar berkas tugas yang telah diunggah oleh mahasiswa peserta kelas.</p>
+  </div>
+  <div>
+    <a href="/lecturer/dashboard" class="btn btn-secondary">⬅️ Kembali ke Dashboard</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    <span>📂 Berkas Tugas Mahasiswa</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Mahasiswa</th>
+          <th>NIM</th>
+          <th>Judul Tugas</th>
+          <th>Nama Berkas</th>
+          <th>Ukuran</th>
+          <th>MIME Type</th>
+          <th>Catatan</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (submissions.length === 0) { %>
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted);">Belum ada berkas tugas yang dikumpulkan untuk mata kuliah ini.</td>
+          </tr>
+        <% } else { %>
+          <% submissions.forEach(s => { %>
+            <tr>
+              <td><strong><%= s.student_name %></strong></td>
+              <td><code><%= s.nim %></code></td>
+              <td><%= s.assignment_title %></td>
+              <td><code><%= s.original_filename %></code></td>
+              <td><%= (s.file_size / 1024).toFixed(1) %> KB</td>
+              <td><span class="badge-tag" style="background-color: var(--bg-surface);"><%= s.mime_type %></span></td>
+              <td style="color: var(--text-secondary); font-size: 0.85rem;"><%= s.notes || '-' %></td>
+              <td>
+                <a href="/lecturer/submission/<%= s.id %>/download" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">
+                  ⬇️ Unduh Berkas
+                </a>
+              </td>
+            </tr>
+          <% }); %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

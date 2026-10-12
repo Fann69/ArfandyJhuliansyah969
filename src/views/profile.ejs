@@ -1,0 +1,91 @@
+<%- include('partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Profil Pengguna & Keamanan Akun</h1>
+    <p class="page-subtitle">Kelola informasi kontak dan kredensial autentikasi akun Anda.</p>
+  </div>
+</div>
+
+<% if (success) { %>
+  <div class="alert alert-success"><%= success %></div>
+<% } %>
+<% if (error) { %>
+  <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<div class="grid-2">
+  <!-- Informasi Pengguna & Update Email (CSRF Target) -->
+  <div class="card">
+    <div class="card-title">
+      <span>👤 Informasi Akun & Pembaruan Email</span>
+    </div>
+
+    <div style="margin-bottom: 1.25rem; font-size: 0.9rem;">
+      <p style="margin-bottom: 0.25rem;"><strong>Nama Lengkap:</strong> <%= profileUser.full_name %></p>
+      <p style="margin-bottom: 0.25rem;"><strong>Username:</strong> <code><%= profileUser.username %></code></p>
+      <p style="margin-bottom: 0.25rem;"><strong>Peran (Role):</strong> <span class="badge-tag badge-role"><%= profileUser.role.toUpperCase() %></span></p>
+      <p style="margin-bottom: 0.25rem;"><strong>Versi Sesi Aktif:</strong> <code>v<%= profileUser.session_version || 1 %></code></p>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1rem 0;">
+
+    <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent-indigo);">
+      🎯 Skenario 4: Pembaruan Email (Target Pengujian CSRF)
+    </h3>
+    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      Di <strong>Mode RENTAN</strong>, formulir ini dapat dieksekusi tanpa validasi token Anti-CSRF. Di <strong>Mode AMAN</strong>, token CSRF wajib valid.
+    </p>
+
+    <form action="/auth/update-email" method="POST">
+      <% if (typeof csrfToken !== 'undefined') { %>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% } %>
+
+      <div class="form-group">
+        <label class="form-label" for="new_email">Alamat Email Baru</label>
+        <input type="email" name="new_email" id="new_email" value="<%= profileUser.email %>" class="form-control" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Perbarui Email Akun
+      </button>
+    </form>
+  </div>
+
+  <!-- Ubah Kata Sandi (Skenario 7: Session Invalidation Target) -->
+  <div class="card">
+    <div class="card-title">
+      <span>🔐 Ubah Kata Sandi</span>
+    </div>
+
+    <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent-purple);">
+      🎯 Skenario 7: Invalidasi Sesi Pasca Pergantian Sandi
+    </h3>
+    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      Di <strong>Mode RENTAN</strong>, pergantian kata sandi tidak membatalkan sesi lama yang masih berjalan di perangkat/tab lain. Di <strong>Mode AMAN</strong>, <code>session_version</code> dinaikkan sehingga seluruh sesi lama otomatis terputus.
+    </p>
+
+    <form action="/auth/change-password" method="POST">
+      <% if (typeof csrfToken !== 'undefined') { %>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% } %>
+
+      <div class="form-group">
+        <label class="form-label" for="current_password">Kata Sandi Saat Ini</label>
+        <input type="password" name="current_password" id="current_password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="new_password">Kata Sandi Baru</label>
+        <input type="password" name="new_password" id="new_password" class="form-control" placeholder="Minimal 6 karakter" required>
+      </div>
+
+      <button type="submit" class="btn btn-secondary" style="width: 100%;">
+        Perbarui Kata Sandi
+      </button>
+    </form>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

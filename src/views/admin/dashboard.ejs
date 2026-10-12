@@ -1,0 +1,110 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard Administrator Sistem</h1>
+    <p class="page-subtitle">Pusat kendali akun pengguna, kurikulum kelas, dan pemantauan log keamanan aplikasi.</p>
+  </div>
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="/admin/users" class="btn btn-primary">👥 Kelola Pengguna</a>
+    <a href="/admin/courses" class="btn btn-secondary">📚 Kelola Mata Kuliah</a>
+  </div>
+</div>
+
+<!-- Statistik Sistem -->
+<div class="grid-4" style="margin-bottom: 1.5rem;">
+  <div class="stat-card">
+    <div class="stat-icon">👥</div>
+    <div>
+      <div class="stat-val"><%= stats.userCount %></div>
+      <div class="stat-label">Total Akun Pengguna</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">🎓</div>
+    <div>
+      <div class="stat-val"><%= stats.studentCount %></div>
+      <div class="stat-label">Mahasiswa Aktif</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">👨‍🏫</div>
+    <div>
+      <div class="stat-val"><%= stats.lecturerCount %></div>
+      <div class="stat-label">Dosen Terdaftar</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">📖</div>
+    <div>
+      <div class="stat-val"><%= stats.courseCount %></div>
+      <div class="stat-label">Mata Kuliah Lab</div>
+    </div>
+  </div>
+</div>
+
+<!-- Log Keamanan Terbaru -->
+<div class="card">
+  <div class="card-title" style="justify-content: space-between;">
+    <span>🛡️ Log Aktivitas Keamanan Terbaru (Audit Logs)</span>
+    <a href="/admin/audit-logs" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+      Lihat Semua Log
+    </a>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Waktu</th>
+          <th>Pengguna</th>
+          <th>Tindakan (Action)</th>
+          <th>Status</th>
+          <th>Mode Lab</th>
+          <th>Detail Aktivitas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (recentLogs.length === 0) { %>
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-muted);">Belum ada log aktivitas yang tercatat.</td>
+          </tr>
+        <% } else { %>
+          <% recentLogs.forEach(l => { %>
+            <tr>
+              <td style="font-size: 0.8rem; color: var(--text-secondary);"><%= new Date(l.created_at).toLocaleTimeString('id-ID') %></td>
+              <td>
+                <% if (l.username) { %>
+                  <strong><%= l.username %></strong> (<%= l.role %>)
+                <% } else { %>
+                  <span style="color: var(--text-muted);">Anonim / Guest</span>
+                <% } %>
+              </td>
+              <td><code><%= l.action %></code></td>
+              <td>
+                <% if (l.status === 'blocked') { %>
+                  <span class="badge-tag" style="background-color: var(--vuln-red-bg); color: #fca5a5; border: 1px solid var(--vuln-red-border);">BLOCKED</span>
+                <% } else if (l.status === 'success') { %>
+                  <span class="badge-tag" style="background-color: var(--secure-green-bg); color: #6ee7b7;">SUCCESS</span>
+                <% } else { %>
+                  <span class="badge-tag" style="background-color: var(--warning-amber-bg); color: #fde047;">FAILED</span>
+                <% } %>
+              </td>
+              <td>
+                <span class="badge-tag <%= l.mode === 'vulnerable' ? 'vulnerable' : 'secure' %>" style="font-size: 0.7rem;">
+                  <%= l.mode.toUpperCase() %>
+                </span>
+              </td>
+              <td style="font-size: 0.85rem; color: var(--text-secondary);"><%= l.details %></td>
+            </tr>
+          <% }); %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
