@@ -72,7 +72,8 @@ async function initDatabase() {
 function initSqliteFallback() {
   return new Promise((resolve, reject) => {
     const sqlite3 = require('sqlite3').verbose();
-    const dbDir = path.join(__dirname, '../../database');
+    const isVercel = Boolean(process.env.VERCEL);
+    const dbDir = isVercel ? path.join('/tmp', 'database') : path.join(__dirname, '../../database');
     if (!fs.existsSync(dbDir)) {
       fs.mkdirSync(dbDir, { recursive: true });
     }
